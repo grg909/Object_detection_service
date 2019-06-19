@@ -1,5 +1,5 @@
 from label_json import label_json
-from lib.core import DeeplabPytorch
+from deeplab import DeeplabPytorch
 from flask import Flask, Response
 import json
 

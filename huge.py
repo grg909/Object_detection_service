@@ -17,7 +17,7 @@ import pandas as pd
 import csv
 import time
 import sched
-from lib.core import DeeplabPytorch
+from deeplab import DeeplabPytorch
 from flask import Flask, Response
 
 
