@@ -5,20 +5,12 @@
 # @Email   : wang.j.au@m.titech.ac.jp
 # @Language: python 3.6
 """
-
+    For local image prediction
 """
 
-import scipy.io as sio
-import scipy
-import scipy.misc
-import os
 import numpy as np
 import pandas as pd
-import csv
-import time
-import sched
 from deeplab import DeeplabPytorch
-from flask import Flask, Response
 
 
 label_count = 182
@@ -34,24 +26,21 @@ X['number'] = X['number'].astype('int')
 X['label'] = X['label'].astype('str')
 
 X_labels = X['label']
-X_labels.as_matrix()
 
 id = np.array(['ImageID', 'PointID'])
 header = np.concatenate((id, X_labels), axis=0)
 
-city = "xiamen"
+city = "shenyang"
 
 outputFile = 'sv_pt_' + city + imageseg + '.csv'
 output = pd.DataFrame(columns=header)
 
-# schedule = sched.scheduler(time.time, time.sleep)
-# schedule.enter(5000, 0, main, ("test1", time.time()))
-
-dp = DeeplabPytorch(config_path='configs/cocostuff164k.yaml',
-                    model_path='data/models/coco/deeplabv2_resnet101_msc-cocostuff164k-100000.pth')
+dp = DeeplabPytorch(
+    config_path='configs/cocostuff164k.yaml',
+    model_path='data/models/coco/deeplabv2_resnet101_msc-cocostuff164k-100000.pth')
 
 
-for filename, labelmap in dp.gen_labelmap('data/xiamen'):
+for filename, labelmap in dp.iter_local_pro('data/shenyang'):
 
     image_id = filename.split('_')[0]
     point_id = filename.split('_')[1]
@@ -60,8 +49,6 @@ for filename, labelmap in dp.gen_labelmap('data/xiamen'):
         data = np.squeeze(labelmap)
         data = np.transpose(data)
         data = data[:513, :513]
-        # scipy.misc.imsave(filename+'.png', data)
-        # Filter labels (includes 255)
         cat_ids = range(0, 182)
         valid = np.reshape(np.in1d(data, cat_ids), data.shape)
         valid_pred = data[valid].astype(int)
@@ -76,10 +63,16 @@ for filename, labelmap in dp.gen_labelmap('data/xiamen'):
         # Groupby categories
         image_df = pd.DataFrame(valid_pred, columns=['class'])
 
-        df = pd.DataFrame({'count': image_df.groupby(['class']).size()}).reset_index()
+        df = pd.DataFrame(
+            {'count': image_df.groupby(['class']).size()}).reset_index()
         df['labelnum'] = df['class'] + 1
 
-        df_label = pd.merge(df, X, how='right', left_on=['labelnum'], right_on=['number'])
+        df_label = pd.merge(
+            df,
+            X,
+            how='right',
+            left_on=['labelnum'],
+            right_on=['number'])
         df_label['ratio'] = df_label['count'] / size
 
         df_ratio = df_label.transpose()
@@ -93,11 +86,12 @@ for filename, labelmap in dp.gen_labelmap('data/xiamen'):
         df_final['PointID'] = point_id
         df_final = df_final.fillna(0)
 
-        df_final.reset_index(inplace=True)  # Resets the index, makes factor a column
+        # Resets the index, makes factor a column
+        df_final.reset_index(inplace=True)
         df_final.drop("index", axis=1, inplace=True)
 
         output = pd.concat([output, df_final], sort=False)
-    except:
+    except BaseException:
         pass
 
 

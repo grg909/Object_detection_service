@@ -10,7 +10,6 @@
 
 import numpy as np
 import pandas as pd
-import json
 
 
 def pd_parse(data):
@@ -24,7 +23,6 @@ def pd_parse(data):
 
 def label_json(labelmap):
 
-
     label_count = 182
     confusion = np.zeros((label_count, label_count))
 
@@ -37,7 +35,6 @@ def label_json(labelmap):
     X['label'] = X['label'].astype('str')
 
     X_labels = X['label']
-    X_labels.as_matrix()
 
     id = np.array(['ImageID', 'PointID'])
     header = np.concatenate((id, X_labels), axis=0)
@@ -54,9 +51,15 @@ def label_json(labelmap):
     width = data.shape[1]
     size = height * width
     image_df = pd.DataFrame(valid_pred, columns=['class'])
-    df = pd.DataFrame({'count': image_df.groupby(['class']).size()}).reset_index()
+    df = pd.DataFrame(
+        {'count': image_df.groupby(['class']).size()}).reset_index()
     df['labelnum'] = df['class'] + 1
-    df_label = pd.merge(df, X, how='right', left_on=['labelnum'], right_on=['number'])
+    df_label = pd.merge(
+        df,
+        X,
+        how='right',
+        left_on=['labelnum'],
+        right_on=['number'])
     df_label['ratio'] = df_label['count'] / size
     df_ratio = df_label.transpose()
     df_ratio.columns = df_ratio.loc['label']
@@ -66,10 +69,11 @@ def label_json(labelmap):
     df_final['ImageID'] = 0
     df_final['PointID'] = 0
     df_final = df_final.fillna(0)
-    df_final.reset_index(inplace=True)  # Resets the index, makes factor a column
+    # Resets the index, makes factor a column
+    df_final.reset_index(inplace=True)
     df_final.drop("index", axis=1, inplace=True)
 
-    output = pd.concat([output, df_final])
+    output = pd.concat([output, df_final], sort=False)
     result = pd_parse(output)
 
     return result
