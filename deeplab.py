@@ -134,7 +134,6 @@ class DeeplabPytorch:
         image = cv2.imread(image_path, cv2.IMREAD_COLOR)
         image, raw_image = self._preprocessing(image)
         labelmap = self._inference(image, raw_image)
-        print('labelmap', labelmap.shape)
 
         return labelmap
 
