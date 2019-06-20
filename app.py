@@ -12,7 +12,6 @@ from label_json import label_json
 from deeplab import DeeplabPytorch
 from flask import Flask, Response, redirect, url_for, request, render_template
 from werkzeug.utils import secure_filename
-import os
 import json
 
 
@@ -29,38 +28,31 @@ dp = DeeplabPytorch(
 # main route
 @app.route('/')
 def index():
-
     return render_template('uploads.html')
 
 
 # is file allowed to be uploaded?
 def allowed_file(filename):
-
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
 
-# result of model prediction
-@app.route('/predict/<filename>')
-def predict(filename):
-
-    labelmap = dp.single(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-    result = label_json(labelmap)
-    res = json.dumps(result)
-    return render_template('result.html', result=res)
-
-
 # file upload route
-@app.route('/upload', methods=['POST'])
-def upload():
+@app.route('/predict', methods=['POST'])
+def predict():
 
     file = request.files['file']
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        save_to = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(save_to)
+        labelmap = dp.single(file.read(), filename)
+        result_raw = label_json(labelmap)
+        result_clean = {key: round(value, 3) for key, value in result_raw.items() if value > 0}
+        result = dict(sorted(
+            result_clean.items(),
+            key=lambda t: t[1],
+            reverse=True))
 
-        return redirect(url_for('predict', filename=filename))
+        return render_template('result.html', result=result, filename=filename)
 
 
 @app.route('/get_json')

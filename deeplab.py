@@ -11,6 +11,8 @@
 from __future__ import absolute_import, division, print_function
 
 import cv2
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -19,6 +21,7 @@ from addict import Dict
 import os
 from tqdm import tqdm
 
+from libs.models import *
 from libs.utils import DenseCRF
 
 
@@ -128,13 +131,33 @@ class DeeplabPytorch:
 
         return labelmap
 
-    def single(self, image_path):
+    def single(self, file, filename):
 
         # Inference
-        image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+        npimg = np.fromstring(file, np.uint8)
+        image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+        # image = cv2.imread(image_path, cv2.IMREAD_COLOR)
         image, raw_image = self._preprocessing(image)
         labelmap = self._inference(image, raw_image)
 
+        plt.figure(figsize=(10, 4))
+        ax = plt.subplot(1, 2, 1)
+        ax.set_title("Input image")
+        ax.imshow(raw_image[:, :, ::-1])
+        ax.axis("off")
+
+        labelm_con = labelmap.astype(np.float32) / self.CONFIG.DATASET.N_CLASSES
+        colormap = cm.jet_r(labelm_con)[..., :-1] * 255.0
+        colormap = np.uint8(colormap)
+        cv2.addWeighted(colormap, 0.5, raw_image, 0.5, 0.0, raw_image)
+
+        ax = plt.subplot(1, 2, 2)
+        ax.set_title('Marked image')
+        ax.imshow(raw_image[:, :, ::-1])
+        ax.axis("off")
+
+        plt.tight_layout()
+        plt.savefig('static/{}'.format(filename))
         return labelmap
 
     def iter_local_pro(self, local_path):
