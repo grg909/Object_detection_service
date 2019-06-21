@@ -1,24 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-      <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"
+      <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           rel="stylesheet">
+      {{ dropzone.load_css() }}
+      {{ dropzone.style('border: 2px dashed #0087F7; margin: 10px 0 10px; min-height: 400px;')  }}
       <meta charset="UTF-8">
   </head>
   <body>
     <div class="container">
       <div class="header">
+        <br/>
         <h3 class="text-muted">街道图像分割处理平台</h3>
       </div>
       <hr/>
-      <div>
-
-      <form action="predict" method="post" enctype="multipart/form-data">
-          <label for="file">请点击按钮选择要上传的文件</label>
-          <input type="file" name="file"/><br/>
-          <input type="submit" value="提交" class="button-new" style="margin-top:15px;"/>
-      </form>
-      </div>
+	  {{ dropzone.create(action='uploads') }}
+      <label>确认上传完毕后，点击提交查看预测结果</label><br/>
+      <input type="submit" value="提交" name="submit"/>
+  	  {{ dropzone.load_js() }}
+  	  {{ dropzone.config(custom_options='addRemoveLinks: true,
+      parallelUploads: 20, dictDefaultMessage: "图片拖拽到这里,支持批量操作", dictInvalidFileType:
+      "文件类型错误", dictRemoveFile: "已上传，删除？", dictRemoveFileConfirmation:"确认删除？", 
+      dictCancelUpload:"上传中，中断？", dictCancelUploadConfirmation:"确认取消上传？",') }}
     </div>
   </body>
 </html>
+

@@ -11,10 +11,9 @@
         <h3 class="text-muted">街道图像分割处理平台</h3>
       </div>
       <hr/>
-      <div>
-          <img src="{{ url_for('static', filename= './{}'.format(filename),_t=val1) }}" alt="你的图片被外星人劫持了～～"/>
-          <p>{{ result }}</p>
-      </div>
+      {% for file in filenames %}
+        {% include '_predict.html' %}
+      {% endfor %}
     </div>
     </body>
 </html>

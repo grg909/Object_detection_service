@@ -8,58 +8,45 @@
     flask main app
 """
 
-from label_json import label_json
-from deeplab import DeeplabPytorch
-from flask import Flask, Response, redirect, url_for, request, render_template
+from flask import Flask, redirect, url_for, request, render_template, jsonify
+from pypinyin import lazy_pinyin
 from werkzeug.utils import secure_filename
 import json
+from configs import Configs
+from flask_dropzone import Dropzone
+from flask_bootstrap import Bootstrap
+import os
+import time
 
-
-UPLOAD_FOLDER = 'data/uploads/'
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 app = Flask(__name__)
-app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-dp = DeeplabPytorch(
-    config_path='configs/cocostuff164k.yaml',
-    model_path='data/models/coco/deeplabv2_resnet101_msc-cocostuff164k-100000.pth')
-
-# main route
-@app.route('/')
-def index():
-    return render_template('uploads.html')
-
+app.config.from_object(Configs)
+dropzone = Dropzone(app)
+bootstrap = Bootstrap(app)
 
 # is file allowed to be uploaded?
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
-
-# file upload route
-@app.route('/predict', methods=['POST'])
-def predict():
-
-    file = request.files['file']
-    if file and allowed_file(file.filename):
+@app.route('/', methods=['GET', 'POST'])
+def uploads():
+    if request.method == 'POST':
+        file = request.files.get('file')
         filename = secure_filename(file.filename)
-        labelmap = dp.single(file.read(), filename)
-        result_raw = label_json(labelmap)
-        result_clean = {key: round(value, 3) for key, value in result_raw.items() if value > 0}
-        result = dict(sorted(
-            result_clean.items(),
-            key=lambda t: t[1],
-            reverse=True))
+        if filename.startswith('.'):
+            name, ext = os.path.splitext(file.filename)
+            filename = '_'.join(lazy_pinyin(name)) + '.' + ext
+            #labelmap = dp.single(file.read(), filename)
+            #labelmap = {'ball':0.19231}
+            #result_raw = label_json(labelmap)
+            #result_clean = {key: round(value, 3) for key, value in result_raw.items() if value > 0}
+            #result = dict(sorted(
+            #    result_clean.items(),
+            #    key=lambda t: t[1],
+            #    reverse=True))
+        print(filename)
+        time.sleep(1)
+        return jsonify(success=True)
+    return render_template('uploads.html')
 
-        return render_template('result.html', result=result, filename=filename)
-
-
-@app.route('/get_json')
-def get_json():
-
-    labelmap = dp.single(image_path='IMG_2885.JPG')
-    result = label_json(labelmap)
-    res = json.dumps(result)
-
-    return Response(response=res, status=200, mimetype="application/json")
