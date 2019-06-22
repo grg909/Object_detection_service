@@ -4,7 +4,7 @@
     <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredPackages">
         <value>
-          <list size="19">
+          <list size="29">
             <item index="0" class="java.lang.String" itemvalue="Bottleneck" />
             <item index="1" class="java.lang.String" itemvalue="xlwt" />
             <item index="2" class="java.lang.String" itemvalue="pycosat" />
@@ -24,6 +24,16 @@
             <item index="16" class="java.lang.String" itemvalue="pkg-resources" />
             <item index="17" class="java.lang.String" itemvalue="numpy" />
             <item index="18" class="java.lang.String" itemvalue="PyMySQL" />
+            <item index="19" class="java.lang.String" itemvalue="scikit-image" />
+            <item index="20" class="java.lang.String" itemvalue="scipy" />
+            <item index="21" class="java.lang.String" itemvalue="tensorflow" />
+            <item index="22" class="java.lang.String" itemvalue="opencv-python" />
+            <item index="23" class="java.lang.String" itemvalue="cython" />
+            <item index="24" class="java.lang.String" itemvalue="h5py" />
+            <item index="25" class="java.lang.String" itemvalue="keras" />
+            <item index="26" class="java.lang.String" itemvalue="IPython[all]" />
+            <item index="27" class="java.lang.String" itemvalue="imgaug" />
+            <item index="28" class="java.lang.String" itemvalue="Pillow" />
           </list>
         </value>
       </option>

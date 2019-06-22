@@ -11,6 +11,7 @@
 from __future__ import absolute_import, division, print_function
 
 import cv2
+import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,6 +25,7 @@ from tqdm import tqdm
 from libs.models import *
 from libs.utils import DenseCRF
 
+mpl.use('Agg')
 
 class DeeplabPytorch:
 
@@ -131,7 +133,7 @@ class DeeplabPytorch:
 
         return labelmap
 
-    def single(self, file, filename):
+    def single(self, file, id_name):
 
         # Inference
         npimg = np.fromstring(file, np.uint8)
@@ -157,7 +159,7 @@ class DeeplabPytorch:
         ax.axis("off")
 
         plt.tight_layout()
-        plt.savefig('static/{}'.format(filename))
+        plt.savefig('static/{}.jpg'.format(id_name))
         return labelmap
 
     def iter_local_pro(self, local_path):

@@ -11,8 +11,12 @@
         <h3 class="text-muted">街道图像分割处理平台</h3>
       </div>
       <hr/>
-      {% for file in filenames %}
-        {% include '_predict.html' %}
+      {% for id_name, mark in results %}
+          <div>
+	        <img src="{{ url_for('static', filename= './{}.jpg'.format(id_name), _t=val1) }}" alt="你的图片被外星人劫持了～～"/><br/>
+            <p>{{ mark }}</p>
+          </div>
+          <hr/>
       {% endfor %}
     </div>
     </body>
