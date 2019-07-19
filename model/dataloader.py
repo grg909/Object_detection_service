@@ -17,7 +17,9 @@ import pandas as pd
 from PIL import Image
 import os
 from pprint import pprint
-
+from pycocotools.coco import COCO
+import pickle
+from tqdm import tqdm
 
 #1.set random seed
 random.seed(2019)
@@ -82,6 +84,111 @@ class PosterDataset(Dataset):
 
     def __len__(self):
         return len(self.imgs)
+
+
+class CocoDataset(Dataset):
+    def __init__(self, image_list, transforms=None, train=True, test=False):
+        super().__init__()
+        self.test = test
+        self.train = train
+        imgs = []
+        if self.test:
+            for index, row in image_list.iterrows():
+                imgs.append((row["filename"]))
+            self.imgs = imgs
+        else:
+            for index, row in image_list.iterrows():
+                imgs.append((row["filename"], row["label"]))
+            self.imgs = imgs
+        if transforms is None:
+            if self.test or not self.train:
+                self.transforms = T.Compose([
+                    T.Resize(224),
+                    T.ToTensor(),
+                    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                ]),
+            else:
+                self.transforms = T.Compose([
+                    T.RandomResizedCrop(224),
+                    T.RandomRotation(30),
+                    T.RandomHorizontalFlip(),
+                    T.RandomVerticalFlip(),
+                    # T.RandomAffine(45),
+                    T.ToTensor(),
+                    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                ])
+        else:
+            self.transforms = transforms
+
+    def __getitem__(self, index):
+        if self.test:
+            filename = self.imgs[index]
+            img = Image.open(filename)
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            if self.transform:
+                img = self.transform(img)
+            return img, filename
+        else:
+            filename, label = self.imgs[index]
+            image_path, _ = os.path.splitext(filename)
+            image_name = image_path.split('/')[-1]
+            img = Image.open(filename)
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            img = self.transforms(img)
+            label = np.array(label).astype(np.int64)
+            return img, image_name, label
+
+    def __len__(self):
+        return len(self.imgs)
+
+
+def get_cocoapi(root, mode, dataType='val2017'):
+
+    #for test
+    if mode == "test":
+        files = []
+        image_root = root + '/images/val2017'
+        for img in os.listdir(image_root):
+            files.append(image_root + '/' + img)
+        files = pd.DataFrame({"filename": files})
+        return files
+    elif mode != "test":
+        #for train and val
+        all_image_path, labels = [], []
+
+        print("loading train dataset")
+        all_image_id = []
+        image_root = root + '/images/val2017'
+        for img in os.listdir(image_root):
+            all_image_path.append(image_root + '/' + img)
+            long_id, _ = os.path.splitext(img)
+            all_image_id.append(int(long_id[-6:]))
+
+        annFile = '{}/annotations/instances_{}.json'.format(root, dataType)
+        coco = COCO(annFile)
+        label_names = pickle.load(open('supercategory.pkl', 'rb'))
+
+        for id in tqdm(all_image_id):
+            annIds = coco.getAnnIds(imgIds=id)
+            cat_list = []
+            for i in coco.loadAnns(annIds):
+                cat_list.append(i['category_id'])
+            cat_set = set(cat_list)
+            super_labels = [i['supercategory'] for i in coco.loadCats(cat_set)]
+            id_labels = []
+            for i in label_names:
+                if i in super_labels:
+                    id_labels.append(1)
+                else:
+                    id_labels.append(0)
+            labels.append(id_labels)
+
+        all_files = pd.DataFrame({"filename": all_image_path, "label": labels})
+        return all_files, label_names
+    else:
+        print("check the mode please!")
 
 
 def get_files(root, mode):
